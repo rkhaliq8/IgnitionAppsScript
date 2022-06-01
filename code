@@ -1,0 +1,60 @@
+//Installs an additional Menu item on the SpreadSheet labeled Form Reply Tool and gives it a menu item, Send Denial Forms, that references the installTrigger function
+function onOpen() {
+  let ui = SpreadsheetApp.getUi();
+  ui.createMenu('Form Reply Tool')
+      .addItem('Send Denial Emails', 'installTrigger')
+      .addToUi();
+}
+
+//Installs a trigger on the Spreadsheet for when a Form response is edited.
+function installTrigger() {
+  ScriptApp.newTrigger('sendDenial')
+      .forSpreadsheet(SpreadsheetApp.getActive())
+      .onEdit()
+      .create();
+}
+
+function sendDenial() {
+  //gets all data from the sheet
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Form Responses 1');
+
+  //gets all values contained in the sheet data obtained
+  var data = sheet.getDataRange().getValues();
+  
+  //setting and initializing variables used in the sending process
+  var firstName = '';
+  var lastName = '';
+  var email = '';
+  var isActive = '';
+  var emailBody = '';
+  var emailSent = '';
+
+  //gets the template email text stored in the Template sheet
+  var emailTemplate = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Template').getRange(1,1).getValue();
+
+  //removes the header row of the spreadsheet to isolate the response data collected in the sheet
+  data.splice(0,1);
+  Logger.log(data);
+
+  //for loop used to remove columns that are not needed to send denial emails. The indexes listed below may need to be changed depending on how they appear on the spreadsheet. My test form/spreadsheet did not import each question into the chronological order as displayed in the form
+  for(var i = 0; i < data.length; i++){
+    data[i].splice(0,1)
+    data[i].splice(3,16)
+  }
+
+  //for loop used to isolate the first name, last name, email address, and active status of each candidate. the loop also replaces (name) in the template to the current candidates name. an if statement is then used to determine if this candidate is still active or has been withdrawn. Note: the indexes for firstName, lastName, email, and isActive may need to be changed when running on your spreadsheet. Please reach out with any questions, I will be more than happy to try and answer them, still very new to Google Apps Scripts
+  for(i = 0; i < data.length; i++){
+    firstName = data[i][0];
+    lastName = data[i][2];
+    email = data[i][1];
+    isActive = data[i][3];
+    emailSent = data[i][4];
+    emailBody = emailTemplate.replace('(name)', firstName + ' ' + lastName)
+    if (isActive == 'N' && emailSent == 'N') {
+      GmailApp.sendEmail(email, 'Sorry :(', emailBody);
+      SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Form Responses 1'))
+      SpreadsheetApp.getActiveSheet().getRange(i+2, 22).setValue('Y')
+    }
+  }
+  Logger.log(data);
+}
