@@ -51,6 +51,7 @@ function sendDenial() {
     emailSent = data[i][4];
     emailBody = emailTemplate.replace('(name)', firstName + ' ' + lastName)
     if (isActive == 'N' && emailSent == 'N') {
+    //The 'Sorry :(' is for the subject line. Please change it accordingly
       GmailApp.sendEmail(email, 'Sorry :(', emailBody);
       SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Form Responses 1'))
       SpreadsheetApp.getActiveSheet().getRange(i+2, 22).setValue('Y')
